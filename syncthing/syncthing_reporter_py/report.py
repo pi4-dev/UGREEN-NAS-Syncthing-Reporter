@@ -15,15 +15,15 @@ from zoneinfo import ZoneInfo
 import xml.etree.ElementTree as ET
 import requests
 
-# ------------------------ Konfiguration ------------------------
+# ------------------------ Configuration ------------------------
 SYNCTHING_URL = os.getenv("SYNCTHING_URL", "http://syncthing:8384").rstrip("/")
 ST_CONFIG = os.getenv("ST_CONFIG", "/st-config/config.xml")
 ST_API_KEY = os.getenv("ST_API_KEY", "").strip()
 WINDOW_HOURS = int(os.getenv("WINDOW_HOURS", "24"))
 REPORT_HOSTNAME = os.getenv("REPORT_HOSTNAME") or socket.gethostname()
-REPORT_LANG = os.getenv("REPORT_LANG", "de").strip().lower()
+REPORT_LANG = os.getenv("REPORT_LANG", "en").strip().lower()
 if REPORT_LANG not in ("de", "en"):
-    REPORT_LANG = "de"
+    REPORT_LANG = "en"
 REPORT_TITLE_PREFIX = os.getenv("REPORT_TITLE_PREFIX", "").strip()
 REPORTER_VERSION = os.getenv("REPORTER_VERSION", "V2.2").strip() or "V2.2"
 REPORTER_BUILD_DATE = os.getenv("REPORTER_BUILD_DATE", "2026-05-21").strip() or "2026-05-21"
@@ -43,7 +43,7 @@ if TABLE_BYTES_METRIC not in ("binary", "decimal"):
 FOLDER_ERRORS_LIMIT = int(os.getenv("FOLDER_ERRORS_LIMIT", "250"))
 FAILED_ITEMS_LIMIT = int(os.getenv("FAILED_ITEMS_LIMIT", "250"))
 
-# Persistenter Cache
+# Persistent cache
 SIZE_CACHE_ENABLED = os.getenv("SIZE_CACHE_ENABLED", "1") in ("1","true","True","yes","YES")
 SIZE_CACHE_FILE = pathlib.Path(os.getenv("SIZE_CACHE_FILE", str(STATE_DIR / "size_cache.json")))
 SIZE_CACHE_TTL_DAYS = int(os.getenv("SIZE_CACHE_TTL_DAYS", "90"))
@@ -123,6 +123,10 @@ I18N = {
         "live_recording": "laufende Aufnahme",
         "updated_n": "{count} Aktualisierungen",
         "path_empty": "Keine Einträge",
+        "status_with_errors": "Mit Fehlern",
+        "status_ok": "OK",
+        "action": "Aktion",
+        "header_meta": "Erstellt: {meta} · Zeitraum: letzte {hours}h",
     },
     "en": {
         "title_prefix": "Syncthing Report",
@@ -169,11 +173,15 @@ I18N = {
         "live_recording": "live recording",
         "updated_n": "{count} updates",
         "path_empty": "No entries",
+        "status_with_errors": "With errors",
+        "status_ok": "OK",
+        "action": "Action",
+        "header_meta": "Created: {meta} · Period: last {hours}h",
     }
 }
 
 def tr(key, **kwargs):
-    txt = I18N.get(REPORT_LANG, I18N["de"]).get(key, key)
+    txt = I18N.get(REPORT_LANG, I18N["en"]).get(key, key)
     return txt.format(**kwargs) if kwargs else txt
 
 
@@ -254,7 +262,7 @@ def _cache_key(fid, item):
     return f"{fid}:::{item}"
 
 def _utc_now_iso_seconds():
-    # tz-aware UTC (Python 3.12+ Empfehlung)
+    # timezone-aware UTC (Python 3.12+ recommendation)
     return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
 
 def cache_load():
@@ -277,7 +285,7 @@ def cache_load():
                         except Exception:
                             dv = None
                         if dv is None or dv.tzinfo is None:
-                            # behandle alte Einträge ohne TZ als UTC
+                            # treat legacy entries without timezone information as UTC
                             try:
                                 dv = dt.datetime.fromisoformat(str(ts)).replace(tzinfo=dt.timezone.utc)
                             except Exception:
@@ -609,7 +617,7 @@ def fetch_size_via_db_file(fid, item):
     except Exception:
         return {"size": csize, "is_dir": cisdir, "from_cache": from_cache}
 
-# ------------------------ HTML & Versand ------------------------
+# ------------------------ HTML & delivery ------------------------
 LINES_CSS = [
     "body { font-family: Segoe UI, Calibri, Arial, sans-serif; margin:0; padding:0; background:#0b1220; color:#eef3ff; }",
     ".container { max-width: 980px; margin: 0 auto; padding: 24px; }",
@@ -637,12 +645,11 @@ LINES_CSS = [
 
 
 def render_html(hostname, rows, status_errors, folder_errors, changes_detail, window_hours):
-    """Rendert eine Outlook-freundliche HTML-Mail im Stil des Nextcloud-Reports.
+    """Render an Outlook-friendly HTML message using the Nextcloud report style.
 
-    Wichtig für Outlook Dark Mode: Der HTML-Code ist bewusst als schlanker
-    Mail-Body ohne erzwungenen dunklen Seitenhintergrund aufgebaut. Genau wie
-    beim Nextcloud-entrypoint kann Outlook die hellen Tabellen-/Rahmenfarben
-    dadurch sauber in den Dark Mode umsetzen.
+    For Outlook Dark Mode, the HTML intentionally uses a lightweight mail body
+    without forcing a dark page background. This allows Outlook to invert the
+    light table and border colors cleanly, matching the Nextcloud entrypoint.
     """
     now = dt.datetime.now(LOCAL_TZ).strftime("%d.%m.%Y %H:%M:%S")
     report_date = dt.datetime.now(LOCAL_TZ).strftime("%d.%m.%Y")
@@ -670,8 +677,8 @@ def render_html(hostname, rows, status_errors, folder_errors, changes_detail, wi
     total_pending_bytes = sum(int(r.get("needBytes", 0) or 0) for r in rows)
     has_errors = bool(total_status_errors or total_failed_items or total_permission_denied)
 
-    # Palette absichtlich wie im nc_inotify_sync-entrypoint: helle Mailfarben,
-    # damit Outlook Desktop sie im Dark Mode selbst invertieren kann.
+    # Intentionally use the same light mail palette as the nc_inotify_sync entrypoint
+    # so Outlook Desktop can invert it automatically in Dark Mode.
     C = {
         "text": "#111827",
         "muted": "#6b7280",
@@ -746,7 +753,7 @@ def render_html(hostname, rows, status_errors, folder_errors, changes_detail, wi
         )
 
     def summary_box():
-        status_title = "Mit Fehlern" if has_errors else "OK"
+        status_title = tr("status_with_errors") if has_errors else tr("status_ok")
         status_emoji = "⚠️" if has_errors else "✅"
         status_color = C["err"] if has_errors else C["ok"]
         return f"""
@@ -932,7 +939,7 @@ def render_html(hostname, rows, status_errors, folder_errors, changes_detail, wi
             rows_html.append(detail_item_row(fid, it, tr("deleted"), C["err"], deleted=True))
         if not rows_html:
             rows_html.append("<tr>" + td(esc(tr("path_empty")), color=C["muted"], extra="font-style:italic;") + td("") + td("") + td("") + "</tr>")
-        action_header = "Aktion" if REPORT_LANG == "de" else "Action"
+        action_header = tr("action")
         header = "<tr>" + th(esc(tr("time")), width="145px", nowrap=True) + th(esc(action_header), width="150px", nowrap=True) + th(esc(tr("path"))) + th(esc(tr("size")), align="right", width="120px", nowrap=True) + "</tr>"
         return f"""
         <table cellpadding="0" cellspacing="0" border="0" style="width:100%; border-collapse:collapse; border:1px solid {C['line']};">
@@ -957,7 +964,7 @@ def render_html(hostname, rows, status_errors, folder_errors, changes_detail, wi
     return f"""
 <div style="font-family:Segoe UI,Roboto,Helvetica,Arial,sans-serif; font-size:14px; line-height:1.4; color:{C['text']};">
   <h2 style="margin:0 0 6px 0; font-size:24px; line-height:1.3; color:{C['text']};">{esc(title)}</h2>
-  <div style="margin:0 0 12px 0; color:{C['muted']}; font-size:13px;">Erstellt: {esc(header_meta)} · Zeitraum: letzte {esc(window_hours)}h</div>
+  <div style="margin:0 0 12px 0; color:{C['muted']}; font-size:13px;">{esc(tr("header_meta", meta=header_meta, hours=window_hours))}</div>
   {summary_box()}
   {status_table()}
   {api_errors_table()}
