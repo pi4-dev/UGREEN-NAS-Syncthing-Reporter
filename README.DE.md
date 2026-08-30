@@ -1,5 +1,7 @@
 # UGREEN NAS Syncthing Reporter
 
+[English](README.md) · [Polski](README.pl.md)
+
 ![SyncthingReporter](Screens/SyncthingReporter.png)
 
 Der UGREEN NAS Syncthing Reporter ist ein leichtgewichtiges Docker-Paket für Syncthing. Es erstellt täglich einen HTML-Bericht und kann diesen per SMTP oder Apprise versenden.
@@ -34,6 +36,8 @@ Dadurch kann der Reporter per `docker compose pull` oder über die UGOS-Docker-A
 ```text
 UGREEN-NAS-Syncthing-Reporter/
 ├─ README.md
+├─ README.DE.md
+├─ README.pl.md
 ├─ LICENSE
 ├─ .gitignore
 ├─ .github/
