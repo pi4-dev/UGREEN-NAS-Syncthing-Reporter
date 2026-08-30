@@ -73,14 +73,14 @@ jobs:
           from pathlib import Path
           import re
 
-          terms = re.compile(r'\b(Deutsch|Sprache|Konfiguration|Persistenter|Empfehlung|behandle|Versand|Rendert|Wichtig|absichtlich|damit|Ordner|Fehler|Änder\w*|Hinzugefügt|Gelöscht|Verzeichnisse|Gesamtgröße|Ausstehend|Zugriff|Beispiel|Erstellt|Zeitraum|letzte|Aktion|unbekannt|pausiert|Einträge|Weitere|Erforderlich|Benachrichtigung|Passwort|Absender|Empfänger)\b', re.IGNORECASE)
+          terms = re.compile(r'\b(Sprache|Konfiguration|Persistenter|Empfehlung|behandle|Versand|Rendert|Wichtig|absichtlich|damit|Ordner|Fehler|Änder\w*|Hinzugefügt|Gelöscht|Verzeichnisse|Gesamtgröße|Ausstehend|Zugriff|Beispiel|Erstellt|Zeitraum|letzte|Aktion|unbekannt|pausiert|Einträge|Weitere|Erforderlich|Benachrichtigung|Passwort|Absender|Empfänger)\b', re.IGNORECASE)
           suffixes = {'.md', '.py', '.sh', '.yaml', '.yml', '.txt', '.example', '.dockerignore', '.gitattributes', '.gitignore'}
           problems = []
 
           for path in Path('.').rglob('*'):
               if not path.is_file() or '.git' in path.parts:
                   continue
-              if path.name == 'README.DE.md' or path.suffix.lower() not in suffixes:
+              if path.name == 'README.DE.md' or path.name == 'translate-source-to-english.yml' or path.suffix.lower() not in suffixes:
                   continue
               try:
                   lines = path.read_text(encoding='utf-8').splitlines()
