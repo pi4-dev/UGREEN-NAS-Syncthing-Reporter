@@ -37,7 +37,7 @@ Dzięki temu reporter może być aktualizowany poleceniem `docker compose pull` 
 UGREEN-NAS-Syncthing-Reporter/
 ├─ README.md
 ├─ README.DE.md
-├─ README.pl.md
+├─ README.PL.md
 ├─ CHANGELOG.md
 ├─ LICENSE
 ├─ .gitignore

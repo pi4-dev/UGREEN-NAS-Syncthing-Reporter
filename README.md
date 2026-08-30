@@ -1,6 +1,6 @@
 # UGREEN NAS Syncthing Reporter
 
-[Polski](README.pl.md) · [Deutsch](README.DE.md)
+[Polski](README.PL.md) · [Deutsch](README.DE.md)
 
 ![SyncthingReporter](Screens/SyncthingReporter.png)
 
@@ -37,7 +37,7 @@ This allows the reporter to be updated with `docker compose pull` or through the
 UGREEN-NAS-Syncthing-Reporter/
 ├─ README.md
 ├─ README.DE.md
-├─ README.pl.md
+├─ README.PL.md
 ├─ CHANGELOG.md
 ├─ LICENSE
 ├─ .gitignore
