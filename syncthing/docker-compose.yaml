@@ -15,12 +15,11 @@ services:
     volumes:
       - ./syncthing/config:/var/syncthing/config:rw
 
-      # Example folder mount / Beispiel-Ordnerfreigabe
+      # Example folder mount
       # Add one line per Syncthing folder.
-      # Für jeden Syncthing-Ordner eine eigene Zeile ergänzen.
       - /volume1/Public:/mnt/Public:rw
 
-      # Additional examples / Weitere Beispiele:
+      # Additional examples:
       # - /volume1/Documents:/mnt/Documents:rw
       # - /volume1/Media:/mnt/Media:rw
     ports:
