@@ -1,39 +1,43 @@
 # UGREEN NAS Syncthing Reporter
 
+[Deutsch](README.DE.md)
+
 ![SyncthingReporter](Screens/SyncthingReporter.png)
 
-Der UGREEN NAS Syncthing Reporter ist ein leichtgewichtiges Docker-Paket für Syncthing. Es erstellt täglich einen HTML-Bericht und kann diesen per SMTP oder Apprise versenden.
+UGREEN NAS Syncthing Reporter is a lightweight Docker package for Syncthing. It generates a daily HTML report and can deliver it via SMTP or Apprise.
 
-Das Paket unterstützt Deutsch und Englisch über `REPORT_LANG=de` oder `REPORT_LANG=en` und ist besonders für UGREEN NAS mit UGOS geeignet. Es funktioniert grundsätzlich auch auf anderen Docker-Hosts.
+The package supports English and German through `REPORT_LANG=en` or `REPORT_LANG=de`. It is particularly well suited to UGREEN NAS systems running UGOS, but it also works on other Docker hosts.
 
 ## Features
 
-- Täglicher HTML-Bericht für Syncthing
-- Versand per SMTP oder Apprise
-- Deutsch und Englisch in einem Projekt
-- Übersicht zu Ordnerstatus, API-Fehlern und fehlgeschlagenen Elementen
-- Auswertung der Änderungen der letzten X Stunden über `WINDOW_HOURS`
-- Outlook-freundliches HTML-Layout
-- Vorgebautes Docker-Image über GitHub Container Registry
-- Lokale Build-Variante für Entwickler und Sonderfälle
-- GitHub Actions Workflow für automatischen Image-Build und Trivy-Scan
-- Dependabot-Konfiguration für Dockerfile, Python-Abhängigkeiten und GitHub Actions
+- Daily HTML report for Syncthing
+- Delivery via SMTP or Apprise
+- English and German runtime language support
+- Overview of folder status, API errors, and failed items
+- Evaluation of changes from the last X hours using `WINDOW_HOURS`
+- Outlook-friendly HTML layout
+- Prebuilt Docker image from GitHub Container Registry
+- Local build option for development and custom builds
+- GitHub Actions workflow for automated image builds and Trivy scans
+- Dependabot configuration for the Dockerfile, Python dependencies, and GitHub Actions
 
-## Docker-Image
+## Docker image
 
-Standardmäßig verwendet die Compose-Datei dieses Image:
+By default, the Compose file uses this image:
 
 ```text
 ghcr.io/railsimulatornet/ugreen-nas-syncthing-reporter:latest
 ```
 
-Dadurch kann der Reporter per `docker compose pull` oder über die UGOS-Docker-App aktualisiert werden, sobald ein neues Image veröffentlicht wurde.
+This allows the reporter to be updated with `docker compose pull` or through the UGOS Docker app whenever a new image is published.
 
-## Projektstruktur
+## Repository structure
 
 ```text
 UGREEN-NAS-Syncthing-Reporter/
 ├─ README.md
+├─ README.DE.md
+├─ CHANGELOG.md
 ├─ LICENSE
 ├─ .gitignore
 ├─ .github/
@@ -42,7 +46,9 @@ UGREEN-NAS-Syncthing-Reporter/
 │     └─ docker-publish.yml
 ├─ Screens/
 │  ├─ DE_Mail.jpg
-│  └─ DE_MailMobil.jpg
+│  ├─ DE_MailMobil.jpg
+│  └─ SyncthingReporter.png
+├─ UGREEN_Syncthing_Reporter_Handbuch_DE-EN.pdf
 └─ syncthing/
    ├─ .env.example
    ├─ docker-compose.yaml
@@ -63,21 +69,13 @@ UGREEN-NAS-Syncthing-Reporter/
       └─ scheduler.sh
 ```
 
-## Quickstart
+## Quick start
 
-1. Kopiere den Ordner `syncthing` auf dein NAS oder deinen Docker-Host.
-2. Kopiere `syncthing/.env.example` nach `syncthing/.env`.
-3. Passe die Werte in `.env` an deine Umgebung an.
-4. Ergänze bei Bedarf eigene Syncthing-Datenpfade in `docker-compose.yaml`.
-5. Starte den Stack:
-
-```bash
-cd syncthing
-docker compose pull
-docker compose up -d
-```
-
-## Update
+1. Copy the `syncthing` directory to your NAS or Docker host.
+2. Copy `syncthing/.env.example` to `syncthing/.env`.
+3. Adjust the values in `.env` for your environment.
+4. Add your own Syncthing data paths to `docker-compose.yaml` if required.
+5. Start the stack:
 
 ```bash
 cd syncthing
@@ -85,11 +83,19 @@ docker compose pull
 docker compose up -d
 ```
 
-Alternativ kann auf UGOS das Projekt in der Docker-App neu bereitgestellt werden. Dabei sollte das neueste Image abgerufen werden.
+## Updating
 
-## Lokaler Build
+```bash
+cd syncthing
+docker compose pull
+docker compose up -d
+```
 
-Für lokale Tests oder angepasste Builds kann die lokale Build-Compose-Datei verwendet werden:
+On UGOS, you can alternatively redeploy the project in the Docker app and make sure the latest image is pulled.
+
+## Local build
+
+For local testing or customized builds, use the local-build Compose file:
 
 ```bash
 cd syncthing
@@ -97,7 +103,7 @@ docker compose -f docker-compose.local-build.yaml build --pull --no-cache syncth
 docker compose -f docker-compose.local-build.yaml up -d
 ```
 
-Alternativ:
+Alternatively:
 
 ```bash
 cd syncthing
@@ -105,7 +111,7 @@ chmod +x scripts/rebuild_reporter_local.sh
 ./scripts/rebuild_reporter_local.sh 2.2.0
 ```
 
-## Security-Scan des Reporter-Images
+## Reporter image security scan
 
 ```bash
 cd syncthing
@@ -113,28 +119,41 @@ chmod +x scripts/security_scan_reporter.sh
 ./scripts/security_scan_reporter.sh
 ```
 
-Die Ergebnisse werden unter `syncthing_reporter_py/state/security/` abgelegt.
+Results are stored under `syncthing_reporter_py/state/security/`.
 
 ## GitHub Container Registry
 
-Das Docker-Image wird durch GitHub Actions gebaut und in GitHub Container Registry veröffentlicht. Der Workflow läuft bei Änderungen am Reporter-Code, bei Tags, manuell und zusätzlich geplant wöchentlich.
+The Docker image is built by GitHub Actions and published to GitHub Container Registry. The workflow runs when reporter code changes, for version tags, manually, and on a weekly schedule.
 
-## Lizenz
+## Configuration
 
-Dieses Projekt steht unter der **MIT License**.
+The main runtime settings are stored in `syncthing/.env`. Important options include:
 
-## Dokumentation
+- `REPORT_LANG=en|de` — report language; English is the default
+- `SYNCTHING_URL` — Syncthing API URL
+- `ST_API_KEY` — optional API key; when empty, the reporter can read it from the mounted `config.xml`
+- `RUN_AT` — daily report execution time
+- `WINDOW_HOURS` — reporting window for file changes
+- `REPORT_HOSTNAME` — display name used in the report and subject
+- `APPRISE_ENABLED`, `APPRISE_URL`, `APPRISE_URLS` — optional Apprise delivery
+- `SMTP_*` — SMTP fallback settings
 
-Das ausführliche Handbuch liegt als PDF im Repository: `UGREEN_Syncthing_Reporter_Handbuch_DE-EN.pdf`
+See `syncthing/.env.example` for the full set of options.
+
+## License
+
+This project is distributed under the **MIT License**.
+
+## Documentation
+
+The detailed bilingual manual is included in the repository as:
+
+```text
+UGREEN_Syncthing_Reporter_Handbuch_DE-EN.pdf
+```
 
 ## Version
 
-- Reporter-Version: V2.2
-- Docker-Image: `ghcr.io/railsimulatornet/ugreen-nas-syncthing-reporter:latest`
-- Build-Stand im Paket: 2026-05-21
-
-## English note
-
-This project is licensed under the **MIT License**.
-
-This repository contains a bilingual German and English Syncthing reporting package for Docker. The runtime language can be switched with `REPORT_LANG=de` or `REPORT_LANG=en`.
+- Reporter version: V2.2
+- Docker image: `ghcr.io/railsimulatornet/ugreen-nas-syncthing-reporter:latest`
+- Package build date: 2026-05-21
